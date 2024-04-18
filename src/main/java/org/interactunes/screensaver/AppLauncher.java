@@ -1,6 +1,6 @@
 package org.interactunes.screensaver;
 
-import org.interactunes.screensaver.frames.MainFrame;
+import org.interactunes.screensaver.frames.AlbumsFrame;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -28,8 +28,8 @@ public class AppLauncher {
                 }
             }
 
-            MainFrame mainFrame = new MainFrame();
-            mainFrame.show();
+            AlbumsFrame albumsFrame = new AlbumsFrame();
+            albumsFrame.show();
         });
     }
 }
