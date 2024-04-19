@@ -19,11 +19,13 @@ You can run the app by running the main method in the `AppLauncher.java` file.
 
 # Features
 
-- The app displays images in a grid
+The app displays images in a grid
 <img src="./images/Grid.png" width="300">
-- Settings are contained in a separate window that can be opened by clicking the settings button.
+
+Settings are contained in a separate window that can be opened by clicking the settings button.
 <img src="./images/Settings.png" width="300">
-- The "Service" option in the settings window allows you to choose between the "Local" and "Discog" services. The Discog service requires that the API key and secret env vars be set.
+
+The "Service" option in the settings window allows you to choose between the "Local" and "Discog" services. The Discog service requires that the API key and secret env vars be set.
 
 # Limitations / Issues
 - There is a limit to the number of requests that the Discog service can make in a given amount of time. When the limit is reached, a 429 error is returned. This is not handled in the app and therefore the app will freeze due to the input stream not being closed. This should be fixed if given more time.
