@@ -1,18 +1,19 @@
 package org.interactunes.screensaver.frames;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.interactunes.screensaver.panels.AlbumImageCell;
+import org.interactunes.screensaver.services.DiscogsAlbumCoverArtService;
+import org.interactunes.screensaver.services.IAlbumCoverArtService;
+import org.interactunes.screensaver.services.LocalAlbumCoverArtService;
 import org.interactunes.screensaver.utils.IShowable;
 import org.interactunes.screensaver.utils.UtilMethods;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.URL;
 import java.util.Random;
 
 public class AlbumsFrame implements IShowable {
@@ -29,12 +30,24 @@ public class AlbumsFrame implements IShowable {
     private final JPanel albumGridPanel;
     private final SettingsFrame settingsFrame;
 
+    @Getter
+    private final LocalAlbumCoverArtService localAlbumCoverArtService;
+    @Getter
+    private final DiscogsAlbumCoverArtService discogsAlbumCoverArtService;
+
     private AlbumImageCell[] albumImageCells;
+
+    @Setter
+    private boolean useLocalAlbums;
 
     @Getter
     private int gridRowCount;
 
     public AlbumsFrame() {
+        useLocalAlbums = true;
+        localAlbumCoverArtService = new LocalAlbumCoverArtService();
+        discogsAlbumCoverArtService = new DiscogsAlbumCoverArtService();
+
         frame = new JFrame();
         frame.setTitle("InteracTunes ScreenSaver - Albums");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -91,17 +104,8 @@ public class AlbumsFrame implements IShowable {
     }
 
     private BufferedImage loadAlbumImage() {
-        // TODO: should load random image, not the same one each time
-        String imagePath = "images/albums/Pink Floyd - Animals.jpeg";
-        URL imageURL = getClass().getClassLoader().getResource(imagePath);
-        if (imageURL != null) {
-            try {
-                return ImageIO.read(imageURL);
-            } catch (IOException e) {
-                System.err.println("Error loading album image: " + e.getMessage());
-            }
-        }
-        return null;
+        IAlbumCoverArtService albumCoverArtService = useLocalAlbums ? localAlbumCoverArtService : discogsAlbumCoverArtService;
+        return albumCoverArtService.getRandomAlbumCoverArt();
     }
 
     private void populateAlbumGrid() {

@@ -1,15 +1,25 @@
 package org.interactunes.screensaver.services;
 
+import java.awt.image.BufferedImage;
+import java.util.List;
+
 /**
  * The service for getting album cover art.
  */
 public interface IAlbumCoverArtService {
 
     /**
-     * Get the url for an album cover art.
+     * Fetches a random album cover art from the service.
      *
-     * @return the url path for an album cover art
+     * @return The album cover art.
      */
-    String getAlbumCoverArt();
+    BufferedImage getRandomAlbumCoverArt();
+
+    /**
+     * Fetches a list of album cover art from the service. The service may return up to {@code maxResults} images.
+     *
+     * @return The list of album cover art.
+     */
+    List<BufferedImage> getAlbumCoverArt(int maxResults);
 
 }

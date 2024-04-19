@@ -1,45 +1,65 @@
 package org.interactunes.screensaver.services;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Random;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
 
     private static final String ALBUMS_FOLDER_PATH = "images/albums";
 
-    private final Random random = new Random(System.currentTimeMillis());
+    private final Logger logger = Logger.getLogger(LocalAlbumCoverArtService.class.getName());
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Fetches a random album cover art from the service. Might be null if no album cover art is found.
+     *
+     * @return The album cover art or null if no album cover art is found.
+     */
+    @Override
+    public BufferedImage getRandomAlbumCoverArt() {
+        List<BufferedImage> albumCoverArt = getAlbumCoverArt(1);
+        return albumCoverArt.isEmpty() ? null : albumCoverArt.get(0);
+    }
 
     @Override
-    public String getAlbumCoverArt() {
+    public List<BufferedImage> getAlbumCoverArt(int maxResults) {
         try {
-            // Get the URL of the albums folder
             URL albumsFolderUrl = getClass().getClassLoader().getResource(ALBUMS_FOLDER_PATH);
             if (albumsFolderUrl == null) {
-                System.err.println("Albums folder not found.");
+                logger.log(Level.SEVERE, "Albums folder not found.");
                 return null;
             }
 
-            // Convert URL to a file path
             File albumsFolder = new File(albumsFolderUrl.toURI());
-
-            // List all files in the albums folder
-            File[] albumFiles = albumsFolder.listFiles();
-            if (albumFiles == null || albumFiles.length == 0) {
-                System.err.println("No album images found in the folder.");
+            List<File> albumFiles = new ArrayList<>(Arrays.stream(Objects.requireNonNull(albumsFolder.listFiles())).toList());
+            if (albumFiles.isEmpty()) {
+                logger.log(Level.SEVERE, "No album images found in the folder.");
                 return null;
             }
+            Collections.shuffle(albumFiles);
 
-            // Randomly select an album file
-            File randomAlbumFile = albumFiles[random.nextInt(albumFiles.length)];
+            List<BufferedImage> images = new ArrayList<>();
+            for (int i = 0; i < Math.min(maxResults, albumFiles.size()); i++) {
+                File albumFile = albumFiles.get(i);
+                BufferedImage image = ImageIO.read(albumFile);
+                if (image == null) {
+                    logger.log(Level.WARNING, "Error reading album image: " + albumFile.getName());
+                    continue;
+                }
+                images.add(image);
+            }
 
-            // Return the path of the selected album file
-            return randomAlbumFile.getPath();
-        } catch (URISyntaxException e) {
-            System.err.println("Error accessing albums folder: " + e.getMessage());
+            return images;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error accessing albums folder: " + e.getMessage());
+            return new ArrayList<>();
         }
-        return null;
     }
 }
 
