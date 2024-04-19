@@ -5,6 +5,7 @@ import java.awt.*;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
+import java.util.Queue;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,15 +16,45 @@ import java.util.logging.Logger;
 public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
 
     private static final String ALBUMS_FOLDER_PATH = "images/albums";
-    private static final int MAX_RESULTS_RANDOM = 10;
 
     private final Logger logger;
+    private final Queue<String> queue;
 
     /**
      * Creates a new local album cover art service.
      */
     public LocalAlbumCoverArtService() {
         logger = Logger.getLogger(LocalAlbumCoverArtService.class.getName());
+        queue = new LinkedList<>();
+        reloadQueueWithLocalPaths();
+    }
+
+    private void reloadQueueWithLocalPaths() {
+        queue.clear();
+        getAlbumCoverArtPaths(queue);
+    }
+
+    private void getAlbumCoverArtPaths(Collection<String> queue) {
+        try {
+            URL albumsFolderUrl = getClass().getClassLoader().getResource(ALBUMS_FOLDER_PATH);
+            if (albumsFolderUrl == null) {
+                logger.log(Level.SEVERE, "Albums folder not found.");
+                return;
+            }
+
+            File albumsFolder = new File(albumsFolderUrl.toURI());
+            List<File> albumFiles = new ArrayList<>(Arrays.stream(Objects.requireNonNull(albumsFolder.listFiles())).toList());
+            if (albumFiles.isEmpty()) {
+                logger.log(Level.SEVERE, "No album images found in the folder.");
+                return;
+            }
+            Collections.shuffle(albumFiles);
+            albumFiles.forEach(albumFile -> queue.add(albumFile.getAbsolutePath()));
+
+            logger.log(Level.INFO, "Fetched " + queue.size() + " album images.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error accessing albums folder: " + e.getMessage());
+        }
     }
 
     /**
@@ -35,44 +66,48 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
      */
     @Override
     public Image getRandomAlbumCoverArt() {
-        List<Image> albumCoverArt = getAlbumCoverArt(MAX_RESULTS_RANDOM);
-        return albumCoverArt.isEmpty() ? null : albumCoverArt.get(0);
+        if (queue.isEmpty()) {
+            reloadQueueWithLocalPaths();
+        }
+        String path = queue.poll();
+        if (path == null) {
+            logger.log(Level.WARNING, "No album cover art found.");
+            return null;
+        }
+        try {
+            return ImageIO.read(new File(path));
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to get album cover art. Error: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
     public List<Image> getAlbumCoverArt(int maxResults) {
-        try {
-            URL albumsFolderUrl = getClass().getClassLoader().getResource(ALBUMS_FOLDER_PATH);
-            if (albumsFolderUrl == null) {
-                logger.log(Level.SEVERE, "Albums folder not found.");
-                return null;
-            }
+        List<Image> images = new ArrayList<>();
 
-            File albumsFolder = new File(albumsFolderUrl.toURI());
-            List<File> albumFiles = new ArrayList<>(Arrays.stream(Objects.requireNonNull(albumsFolder.listFiles())).toList());
-            if (albumFiles.isEmpty()) {
-                logger.log(Level.SEVERE, "No album images found in the folder.");
-                return null;
+        while (images.size() < maxResults) {
+            if (queue.isEmpty()) {
+                reloadQueueWithLocalPaths();
             }
-            Collections.shuffle(albumFiles);
-
-            List<Image> images = new ArrayList<>();
-            for (int i = 0; i < Math.min(maxResults, albumFiles.size()); i++) {
-                File albumFile = albumFiles.get(i);
-                Image image = ImageIO.read(albumFile);
+            String path = queue.poll();
+            if (path == null) {
+                logger.log(Level.WARNING, "No album cover art found for path: " + path);
+                continue;
+            }
+            try {
+                Image image = ImageIO.read(new File(path));
                 if (image == null) {
-                    logger.log(Level.WARNING, "Error reading album image: " + albumFile.getName());
+                    logger.log(Level.WARNING, "Error reading album image: " + path);
                     continue;
                 }
                 images.add(image);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to get album cover art. Error: " + e.getMessage());
             }
-
-            logger.log(Level.INFO, "Fetched " + images.size() + " album images.");
-            return images;
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error accessing albums folder: " + e.getMessage());
-            return new ArrayList<>();
         }
+
+        return images;
     }
 }
 

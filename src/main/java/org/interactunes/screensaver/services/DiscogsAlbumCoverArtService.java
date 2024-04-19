@@ -70,8 +70,15 @@ public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
      * @return The album cover art or null if no album cover art is found.
      */
     public Image getRandomAlbumCoverArt() {
-        List<String> albumCoverUrls = getAlbumCoverArtUrls(MAX_RESULTS_RANDOM);
+        if (!loadedUrls.isEmpty()) {
+            try {
+                return ImageIO.read(new URL(loadedUrls.poll()));
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to get album cover art. Error: " + e.getMessage());
+            }
+        }
 
+        List<String> albumCoverUrls = getAlbumCoverArtUrls(MAX_RESULTS_RANDOM);
         if (albumCoverUrls.isEmpty()) {
             logger.log(Level.WARNING, "No album cover art found.");
             return null;
