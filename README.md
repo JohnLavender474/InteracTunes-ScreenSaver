@@ -32,3 +32,4 @@ The "Service" option in the settings window allows you to choose between the "Lo
 # Limitations / Issues
 - There is a limit to the number of requests that the Discog service can make in a given amount of time. When the limit is reached, a 429 error is returned. This is not handled in the app and therefore the app will freeze due to the input stream not being closed. This should be fixed if given more time.
 - The app does not handle the case where the user enters an invalid API key or secret. This should be fixed if given more time.
+- Font and window size is not reliably consistent across platforms. I use Linux for my personal laptop, and on this device, the windows and font sizes seem good. However, when I load the app on a Windows laptop, the window and font sizes are incredibly large.
