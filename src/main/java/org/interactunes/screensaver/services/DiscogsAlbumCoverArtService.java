@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
 
     private static final String BASE_URL = "https://api.discogs.com/database/search";
-    private static final String API_KEY = DotEnvInstance.get("DISCOGS_API_KEY"); // DotEnvInstance
+    private static final String API_KEY = DotEnvInstance.get("DISCOGS_API_KEY"); 
     private static final String API_SECRET = DotEnvInstance.get("DISCOGS_API_SECRET");
     private static final int MAX_RESULTS_RANDOM = 100;
     private static final int MAX_RESULTS_SCALAR = 4;
