@@ -15,8 +15,11 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AlbumsFrame implements IShowable {
 
@@ -25,28 +28,34 @@ public class AlbumsFrame implements IShowable {
     public static final int DEFAULT_CELL_GAP = 10;
     public static final int DEFAULT_WINDOW_WIDTH = 1200;
     public static final int DEFAULT_WINDOW_HEIGHT = 1200;
+    public static final int MIN_WINDOW_WIDTH = 900;
+    public static final int MIN_WINDOW_HEIGHT = 900;
     private static final int SETTINGS_FONT_SIZE = 20;
-    private static final int IMAGE_CHANGE_INTERVAL_MS = 2000;
+    private static final int IMAGE_CHANGE_INTERVAL_MS = 1000;
+
+    private final Logger logger = Logger.getLogger(AlbumsFrame.class.getName());
 
     private final JFrame frame;
     private final JPanel albumGridPanel;
     private final SettingsFrame settingsFrame;
+    private final Timer imageChangeTimer;
 
     @Getter
     private final LocalAlbumCoverArtService localAlbumCoverArtService;
     @Getter
     private final DiscogsAlbumCoverArtService discogsAlbumCoverArtService;
 
-    private AlbumImageCell[] albumImageCells;
+    private List<AlbumImageCell> albumImageCells;
 
     @Setter
-    private boolean useLocalAlbums;
+    @Getter
+    private boolean usingLocalAlbums;
 
     @Getter
     private int gridRowCount;
 
     public AlbumsFrame() {
-        useLocalAlbums = true;
+        usingLocalAlbums = true;
         localAlbumCoverArtService = new LocalAlbumCoverArtService();
         discogsAlbumCoverArtService = new DiscogsAlbumCoverArtService();
 
@@ -54,6 +63,7 @@ public class AlbumsFrame implements IShowable {
         frame.setTitle("InteracTunes ScreenSaver - Albums");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
+        frame.setMinimumSize(new Dimension(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT));
         frame.setLayout(new BorderLayout(DEFAULT_BORDER_GAP, DEFAULT_BORDER_GAP));
         frame.setLocationRelativeTo(null);
         frame.addComponentListener(new ComponentAdapter() {
@@ -77,8 +87,8 @@ public class AlbumsFrame implements IShowable {
         frame.add(albumGridPanel, BorderLayout.CENTER);
         albumGridPanel.setLayout(new GridLayout(gridRowCount, gridRowCount, DEFAULT_CELL_GAP, DEFAULT_CELL_GAP));
 
-        albumImageCells = new AlbumImageCell[gridRowCount * gridRowCount];
-        populateAlbumGrid();
+        albumImageCells = new ArrayList<>();
+        repopulateAlbumGrid();
 
         settingsFrame = new SettingsFrame(this);
         JButton settingsButton = new JButton("Settings");
@@ -87,13 +97,7 @@ public class AlbumsFrame implements IShowable {
         frame.add(settingsButton, BorderLayout.SOUTH);
 
         Random random = new Random(System.currentTimeMillis());
-        Timer imageChangeTimer = new Timer(IMAGE_CHANGE_INTERVAL_MS, e -> {
-            int randomIndex = random.nextInt(getCellCount());
-            BufferedImage image = loadAlbumImage();
-            if (image != null) {
-                albumImageCells[randomIndex].setImage(image);
-            }
-        });
+        imageChangeTimer = createTimer(random);
         imageChangeTimer.setRepeats(true);
         imageChangeTimer.start();
     }
@@ -103,46 +107,68 @@ public class AlbumsFrame implements IShowable {
         frame.setVisible(true);
     }
 
-    public void setGridRowCount(int gridRowCount) {
+    void setGridRowCount(int gridRowCount) {
         this.gridRowCount = gridRowCount;
         updateGrid();
     }
 
-    public int getCellCount() {
+    void updateGrid() {
+        albumGridPanel.removeAll();
+        albumGridPanel.setLayout(new GridLayout(gridRowCount, gridRowCount, 10, 10));
+        repopulateAlbumGrid();
+        frame.revalidate();
+        frame.repaint();
+        resizeAlbumImages();
+    }
+
+    void setImageUpdateDelay(int delay) {
+        imageChangeTimer.setDelay(delay);
+    }
+
+    int getImageUpdateDelay() {
+        return imageChangeTimer.getDelay();
+    }
+
+    private Timer createTimer(Random random) {
+        return new Timer(IMAGE_CHANGE_INTERVAL_MS, e -> {
+            int randomIndex = random.nextInt(albumImageCells.size());
+            Image image = loadAlbumImage();
+            if (image == null) {
+                logger.log(Level.WARNING, "Failed to load album image.");
+                return;
+            }
+            logger.log(Level.INFO, "For index: " + randomIndex + " image: " + image);
+            AlbumImageCell albumImageCell = albumImageCells.get(randomIndex);
+            albumImageCell.setImage(image);
+        });
+    }
+
+    private int getCellCount() {
         return gridRowCount * gridRowCount;
     }
 
-    private BufferedImage loadAlbumImage() {
-        IAlbumCoverArtService albumCoverArtService = useLocalAlbums ? localAlbumCoverArtService : discogsAlbumCoverArtService;
-        return albumCoverArtService.getRandomAlbumCoverArt();
-    }
-
-    private void populateAlbumGrid() {
-        albumImageCells = new AlbumImageCell[getCellCount()];
+    private void repopulateAlbumGrid() {
+        albumImageCells = new ArrayList<>();
         for (int i = 0; i < getCellCount(); i++) {
-            BufferedImage image = loadAlbumImage();
+            Image image = loadAlbumImage();
             if (image == null) {
-                // TODO: load error image, i.e. image = ErrorImage.getInstance().getImage();
+                logger.log(Level.WARNING, "Failed to load album image.");
                 continue;
             }
-            albumImageCells[i] = new AlbumImageCell(image);
-            albumGridPanel.add(albumImageCells[i].getPanel());
+            AlbumImageCell imageCell = new AlbumImageCell(image);
+            albumImageCells.add(imageCell);
+            albumGridPanel.add(imageCell.getPanel());
         }
+    }
+
+    private Image loadAlbumImage() {
+        IAlbumCoverArtService albumCoverArtService = usingLocalAlbums ? localAlbumCoverArtService : discogsAlbumCoverArtService;
+        return albumCoverArtService.getRandomAlbumCoverArt();
     }
 
     private void resizeAlbumImages() {
         int cellWidth = albumGridPanel.getWidth() / gridRowCount;
         int cellHeight = albumGridPanel.getHeight() / gridRowCount;
-        for (AlbumImageCell albumImageCell : albumImageCells) {
-            albumImageCell.resize(cellWidth, cellHeight);
-        }
-    }
-
-    private void updateGrid() {
-        albumGridPanel.removeAll();
-        albumGridPanel.setLayout(new GridLayout(gridRowCount, gridRowCount, 10, 10));
-        populateAlbumGrid();
-        frame.revalidate();
-        frame.repaint();
+        albumImageCells.forEach(albumImageCell -> albumImageCell.resize(cellWidth, cellHeight));
     }
 }

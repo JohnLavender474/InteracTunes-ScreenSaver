@@ -1,11 +1,11 @@
 package org.interactunes.screensaver.services;
 
+import lombok.NonNull;
 import lombok.Setter;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -31,7 +31,8 @@ public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
     private final Logger logger = Logger.getLogger(DiscogsAlbumCoverArtService.class.getName());
 
     @Setter
-    private String searchQuery;
+    @NonNull
+    private String searchQuery = "";
 
     /**
      * {@inheritDoc}
@@ -40,13 +41,13 @@ public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
      *
      * @return The album cover art or null if no album cover art is found.
      */
-    public BufferedImage getRandomAlbumCoverArt() {
-        List<BufferedImage> albumCoverArt = getAlbumCoverArt(MAX_RESULTS_RANDOM);
+    public Image getRandomAlbumCoverArt() {
+        List<Image> albumCoverArt = getAlbumCoverArt(MAX_RESULTS_RANDOM);
         return albumCoverArt.isEmpty() ? null : albumCoverArt.get(0);
     }
 
     @Override
-    public List<BufferedImage> getAlbumCoverArt(int maxResults) {
+    public List<Image> getAlbumCoverArt(int maxResults) {
         try {
             InputStream inputStream = getInputStream(searchQuery, maxResults);
             Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
@@ -56,7 +57,7 @@ public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
             List<Object> releaseObjs = jsonObject.getJSONArray("results").toList();
             Collections.shuffle(releaseObjs);
 
-            List<BufferedImage> images = new ArrayList<>();
+            List<Image> images = new ArrayList<>();
 
             for (int i = 0; i < Math.min(maxResults, releaseObjs.size()); i++) {
                 Object releaseObj = releaseObjs.get(i);
@@ -65,7 +66,7 @@ public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
                 }
                 String coverImageUrl = release.getString("cover_image");
                 if (coverImageUrl != null && !coverImageUrl.isBlank()) {
-                    BufferedImage image = ImageIO.read(new URL(coverImageUrl));
+                    Image image = ImageIO.read(new URL(coverImageUrl));
                     images.add(image);
                 }
             }

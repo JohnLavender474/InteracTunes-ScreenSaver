@@ -1,9 +1,10 @@
 package org.interactunes.screensaver.services;
 
 import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+import java.awt.*;
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -11,6 +12,7 @@ import java.util.logging.Logger;
 public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
 
     private static final String ALBUMS_FOLDER_PATH = "images/albums";
+    private static final int MAX_RESULTS_RANDOM = 10;
 
     private final Logger logger = Logger.getLogger(LocalAlbumCoverArtService.class.getName());
 
@@ -22,13 +24,13 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
      * @return The album cover art or null if no album cover art is found.
      */
     @Override
-    public BufferedImage getRandomAlbumCoverArt() {
-        List<BufferedImage> albumCoverArt = getAlbumCoverArt(1);
+    public Image getRandomAlbumCoverArt() {
+        List<Image> albumCoverArt = getAlbumCoverArt(MAX_RESULTS_RANDOM);
         return albumCoverArt.isEmpty() ? null : albumCoverArt.get(0);
     }
 
     @Override
-    public List<BufferedImage> getAlbumCoverArt(int maxResults) {
+    public List<Image> getAlbumCoverArt(int maxResults) {
         try {
             URL albumsFolderUrl = getClass().getClassLoader().getResource(ALBUMS_FOLDER_PATH);
             if (albumsFolderUrl == null) {
@@ -44,10 +46,10 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
             }
             Collections.shuffle(albumFiles);
 
-            List<BufferedImage> images = new ArrayList<>();
+            List<Image> images = new ArrayList<>();
             for (int i = 0; i < Math.min(maxResults, albumFiles.size()); i++) {
                 File albumFile = albumFiles.get(i);
-                BufferedImage image = ImageIO.read(albumFile);
+                Image image = ImageIO.read(albumFile);
                 if (image == null) {
                     logger.log(Level.WARNING, "Error reading album image: " + albumFile.getName());
                     continue;
@@ -55,6 +57,7 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
                 images.add(image);
             }
 
+            logger.log(Level.INFO, "Fetched " + images.size() + " album images.");
             return images;
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error accessing albums folder: " + e.getMessage());

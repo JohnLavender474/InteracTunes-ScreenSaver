@@ -1,5 +1,6 @@
 package org.interactunes.screensaver.services;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
@@ -13,13 +14,13 @@ public interface IAlbumCoverArtService {
      *
      * @return The album cover art.
      */
-    BufferedImage getRandomAlbumCoverArt();
+    Image getRandomAlbumCoverArt();
 
     /**
      * Fetches a list of album cover art from the service. The service may return up to {@code maxResults} images.
      *
      * @return The list of album cover art.
      */
-    List<BufferedImage> getAlbumCoverArt(int maxResults);
+    List<Image> getAlbumCoverArt(int maxResults);
 
 }

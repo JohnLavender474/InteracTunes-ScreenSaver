@@ -4,7 +4,6 @@ import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 public class AlbumImageCell {
 
@@ -14,14 +13,14 @@ public class AlbumImageCell {
     @Getter
     private final JPanel panel;
 
-    private BufferedImage image;
+    private Image image;
     private int imageSize;
 
-    public AlbumImageCell(BufferedImage image) {
+    public AlbumImageCell(Image image) {
         this(image, DEFAULT_INIT_SIZE);
     }
 
-    public AlbumImageCell(BufferedImage image, int imageSize) {
+    public AlbumImageCell(Image image, int imageSize) {
         this.image = image;
         this.imageSize = imageSize;
 
@@ -47,7 +46,7 @@ public class AlbumImageCell {
         panel.setBackground(Color.BLACK);
     }
 
-    public void setImage(BufferedImage image) {
+    public void setImage(Image image) {
         this.image = image;
         updateImage();
     }

@@ -5,7 +5,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -39,13 +39,13 @@ public class LastFMAlbumCoverArtService implements IAlbumCoverArtService {
      *
      * @return The album cover art or null if no album cover art is found.
      */
-    public BufferedImage getRandomAlbumCoverArt() {
-        List<BufferedImage> albumCoverArt = getAlbumCoverArt(MAX_RESULTS_RANDOM);
+    public Image getRandomAlbumCoverArt() {
+        List<Image> albumCoverArt = getAlbumCoverArt(MAX_RESULTS_RANDOM);
         return albumCoverArt.isEmpty() ? null : albumCoverArt.get(0);
     }
 
     @Override
-    public List<BufferedImage> getAlbumCoverArt(int maxResults) {
+    public List<Image> getAlbumCoverArt(int maxResults) {
         try {
             JSONObject results = getJsonObject(searchQuery);
             if (results == null) {
@@ -56,7 +56,7 @@ public class LastFMAlbumCoverArtService implements IAlbumCoverArtService {
             List<Object> albumMatches = results.getJSONObject("albummatches").getJSONArray("album").toList();
             Collections.shuffle(albumMatches);
 
-            List<BufferedImage> images = new ArrayList<>();
+            List<Image> images = new ArrayList<>();
 
             for (int i = 0; i < Math.min(maxResults, albumMatches.size()); i++) {
                 try {
@@ -78,7 +78,7 @@ public class LastFMAlbumCoverArtService implements IAlbumCoverArtService {
                         continue;
                     }
 
-                    BufferedImage image = ImageIO.read(new URL(imagePath));
+                    Image image = ImageIO.read(new URL(imagePath));
                     images.add(image);
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Error while iterating JSON results. Error is caught, continuing to iterate. Error: " + e.getMessage());
