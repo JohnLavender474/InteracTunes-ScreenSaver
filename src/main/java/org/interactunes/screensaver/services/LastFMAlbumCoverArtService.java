@@ -1,6 +1,7 @@
 package org.interactunes.screensaver.services;
 
 import lombok.Setter;
+import org.interactunes.screensaver.utils.DotEnvInstance;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -25,7 +26,7 @@ import java.util.logging.Logger;
 @Setter
 public class LastFMAlbumCoverArtService implements IAlbumCoverArtService {
 
-    private static final String API_KEY = "19349375ee9a97891c4741b022c8bc5b";
+    private static final String API_KEY = DotEnvInstance.get("LASTFM_API_KEY");
     private static final int MAX_RESULTS_RANDOM = 100;
 
     private final Logger logger = Logger.getLogger(LastFMAlbumCoverArtService.class.getName());

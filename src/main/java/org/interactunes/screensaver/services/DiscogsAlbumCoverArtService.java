@@ -1,7 +1,9 @@
 package org.interactunes.screensaver.services;
 
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import org.interactunes.screensaver.utils.DotEnvInstance;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
@@ -10,10 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,14 +23,15 @@ import java.util.logging.Logger;
 public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
 
     private static final String BASE_URL = "https://api.discogs.com/database/search";
-    private static final String API_KEY = "QgIfnvlylCdUIrWaGGjT";
-    private static final String API_SECRET = "TvDQdJIxisuvdquJDPGlvFWTcrunoYen";
+    private static final String API_KEY = DotEnvInstance.get("DISCOGS_API_KEY"); // DotEnvInstance
+    private static final String API_SECRET = DotEnvInstance.get("DISCOGS_API_SECRET");
     private static final int MAX_RESULTS_RANDOM = 100;
     private static final int MAX_RESULTS_SCALAR = 4;
 
     private final Logger logger = Logger.getLogger(DiscogsAlbumCoverArtService.class.getName());
 
     @Setter
+    @Getter
     @NonNull
     private String searchQuery = "";
 
@@ -42,12 +43,26 @@ public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
      * @return The album cover art or null if no album cover art is found.
      */
     public Image getRandomAlbumCoverArt() {
-        List<Image> albumCoverArt = getAlbumCoverArt(MAX_RESULTS_RANDOM);
-        return albumCoverArt.isEmpty() ? null : albumCoverArt.get(0);
+        List<String> albumCoverUrls = getAlbumCoverArtUrls(MAX_RESULTS_RANDOM);
+        if (albumCoverUrls.isEmpty()) {
+            logger.log(Level.WARNING, "No album cover art found.");
+            return null;
+        }
+        try {
+            return ImageIO.read(new URL(albumCoverUrls.get(0)));
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to get album cover art. Error: " + e.getMessage());
+            return null;
+        }
     }
 
-    @Override
-    public List<Image> getAlbumCoverArt(int maxResults) {
+    /**
+     * Gets the album cover art URLs for the search query.
+     *
+     * @param maxResults The maximum number of results to fetch.
+     * @return The album cover art URLs.
+     */
+    public List<String> getAlbumCoverArtUrls(int maxResults) {
         try {
             InputStream inputStream = getInputStream(searchQuery, maxResults);
             Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
@@ -56,26 +71,40 @@ public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
             JSONObject jsonObject = new JSONObject(jsonResponse);
             List<Object> releaseObjs = jsonObject.getJSONArray("results").toList();
             Collections.shuffle(releaseObjs);
+            logger.log(Level.INFO, "Found " + releaseObjs.size() + " results.");
 
-            List<Image> images = new ArrayList<>();
+            List<String> imageUrls = new ArrayList<>();
 
             for (int i = 0; i < Math.min(maxResults, releaseObjs.size()); i++) {
                 Object releaseObj = releaseObjs.get(i);
-                if (!(releaseObj instanceof JSONObject release)) {
-                    continue;
-                }
-                String coverImageUrl = release.getString("cover_image");
-                if (coverImageUrl != null && !coverImageUrl.isBlank()) {
-                    Image image = ImageIO.read(new URL(coverImageUrl));
-                    images.add(image);
+                try {
+                    Map<String, Object> release = (Map<String, Object>) releaseObj;
+                    String imageUrl = (String) release.get("cover_image");
+                    if (imageUrl != null && !imageUrl.isBlank()) {
+                        imageUrls.add(imageUrl);
+                    }
+                } catch (ClassCastException e) {
+                    logger.log(Level.WARNING, "Invalid release object: " + e.getMessage());
                 }
             }
 
-            return images;
-        } catch (IOException e) {
+            logger.log(Level.INFO, "Found " + imageUrls.size() + " image URLs.");
+            return imageUrls;
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to get album cover art. Error: " + e.getMessage());
         }
-        return null;
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<Image> getAlbumCoverArt(int maxResults) {
+        return getAlbumCoverArtUrls(maxResults).stream().map(url -> {
+            try {
+                return (Image) ImageIO.read(new URL(url));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).toList();
     }
 
     /**
@@ -88,7 +117,7 @@ public class DiscogsAlbumCoverArtService implements IAlbumCoverArtService {
     private static InputStream getInputStream(String searchQuery, int maxResults) throws IOException {
         searchQuery = searchQuery.replaceAll("\\s+", "");
 
-        String query = "q=" + searchQuery + "&per_page=" + (maxResults * MAX_RESULTS_SCALAR) + "&type=release&key=" + API_KEY + "&secret=" + API_SECRET;
+        String query = "q=" + searchQuery + "&per_page=" + (maxResults * MAX_RESULTS_SCALAR) + "&key=" + API_KEY + "&secret=" + API_SECRET;
         String urlString = BASE_URL + "?" + query;
         URL url = new URL(urlString);
 

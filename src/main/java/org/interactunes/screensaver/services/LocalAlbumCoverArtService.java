@@ -9,6 +9,9 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * The service for fetching album cover art from the local file system.
+ */
 public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
 
     private static final String ALBUMS_FOLDER_PATH = "images/albums";

@@ -21,17 +21,20 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * A frame that displays album cover art.
+ */
 public class AlbumsFrame implements IShowable {
 
-    public static final int DEFAULT_BORDER_GAP = 10;
-    public static final int DEFAULT_GRID_ROW_COUNT = 3;
-    public static final int DEFAULT_CELL_GAP = 10;
-    public static final int DEFAULT_WINDOW_WIDTH = 1200;
-    public static final int DEFAULT_WINDOW_HEIGHT = 1200;
-    public static final int MIN_WINDOW_WIDTH = 900;
-    public static final int MIN_WINDOW_HEIGHT = 900;
+    private static final int DEFAULT_BORDER_GAP = 10;
+    private static final int DEFAULT_GRID_ROW_COUNT = 3;
+    private static final int DEFAULT_CELL_GAP = 10;
+    private static final int DEFAULT_WINDOW_WIDTH = 1200;
+    private static final int DEFAULT_WINDOW_HEIGHT = 1200;
+    private static final int MIN_WINDOW_WIDTH = 900;
+    private static final int MIN_WINDOW_HEIGHT = 900;
     private static final int SETTINGS_FONT_SIZE = 20;
-    private static final int IMAGE_CHANGE_INTERVAL_MS = 1000;
+    private static final int DEFAULT_IMAGE_CHANGE_INTERVAL_MS = 3000;
 
     private final Logger logger = Logger.getLogger(AlbumsFrame.class.getName());
 
@@ -54,6 +57,11 @@ public class AlbumsFrame implements IShowable {
     @Getter
     private int gridRowCount;
 
+    private boolean updating;
+
+    /**
+     * Create a new instance of the AlbumsFrame class.
+     */
     public AlbumsFrame() {
         usingLocalAlbums = true;
         localAlbumCoverArtService = new LocalAlbumCoverArtService();
@@ -76,8 +84,9 @@ public class AlbumsFrame implements IShowable {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
-                super.windowClosed(e);
                 settingsFrame.dispose();
+                imageChangeTimer.stop();
+                super.windowClosed(e);
             }
         });
 
@@ -90,16 +99,16 @@ public class AlbumsFrame implements IShowable {
         albumImageCells = new ArrayList<>();
         repopulateAlbumGrid();
 
+        Random random = new Random(System.currentTimeMillis());
+        imageChangeTimer = createTimer(random);
+        imageChangeTimer.setRepeats(true);
+        imageChangeTimer.start();
+
         settingsFrame = new SettingsFrame(this);
         JButton settingsButton = new JButton("Settings");
         settingsButton.setFont(new Font("Arial", Font.PLAIN, UtilMethods.pointToPixel(SETTINGS_FONT_SIZE)));
         settingsButton.addActionListener(e -> settingsFrame.show());
         frame.add(settingsButton, BorderLayout.SOUTH);
-
-        Random random = new Random(System.currentTimeMillis());
-        imageChangeTimer = createTimer(random);
-        imageChangeTimer.setRepeats(true);
-        imageChangeTimer.start();
     }
 
     @Override
@@ -107,32 +116,60 @@ public class AlbumsFrame implements IShowable {
         frame.setVisible(true);
     }
 
+    /**
+     * Set the number of rows and columns on the album grid.
+     *
+     * @param gridRowCount the number of rows and columns on the album grid
+     */
     void setGridRowCount(int gridRowCount) {
         this.gridRowCount = gridRowCount;
         updateGrid();
     }
 
+    /**
+     * Update the album grid. Repopulates the album grid with new album images. Resizes the album images.
+     */
     void updateGrid() {
-        albumGridPanel.removeAll();
-        albumGridPanel.setLayout(new GridLayout(gridRowCount, gridRowCount, 10, 10));
-        repopulateAlbumGrid();
-        frame.revalidate();
-        frame.repaint();
-        resizeAlbumImages();
+        updating = true;
+
+        SwingUtilities.invokeLater(() -> {
+            albumGridPanel.removeAll();
+            albumGridPanel.setLayout(new GridLayout(gridRowCount, gridRowCount, 10, 10));
+            repopulateAlbumGrid();
+            resizeAlbumImages();
+
+            SwingUtilities.invokeLater(() -> {
+                frame.repaint();
+                updating = false;
+            });
+        });
     }
 
-    void setImageUpdateDelay(int delay) {
-        imageChangeTimer.setDelay(delay);
+    /**
+     * Set the delay between image updates in seconds.
+     *
+     * @param delayInSeconds the delay between image updates in seconds
+     */
+    void setImageUpdateDelay(int delayInSeconds) {
+        imageChangeTimer.setDelay(delayInSeconds * 1000);
     }
 
+    /**
+     * Get the delay between image updates in seconds.
+     *
+     * @return the delay between image updates in seconds
+     */
     int getImageUpdateDelay() {
-        return imageChangeTimer.getDelay();
+        return imageChangeTimer.getDelay() / 1000;
     }
 
     private Timer createTimer(Random random) {
-        return new Timer(IMAGE_CHANGE_INTERVAL_MS, e -> {
+        return new Timer(DEFAULT_IMAGE_CHANGE_INTERVAL_MS, e -> {
+            if (updating) {
+                return;
+            }
             int randomIndex = random.nextInt(albumImageCells.size());
-            Image image = loadAlbumImage();
+            Image image = loadSingleAlbumImage();
             if (image == null) {
                 logger.log(Level.WARNING, "Failed to load album image.");
                 return;
@@ -149,19 +186,20 @@ public class AlbumsFrame implements IShowable {
 
     private void repopulateAlbumGrid() {
         albumImageCells = new ArrayList<>();
-        for (int i = 0; i < getCellCount(); i++) {
-            Image image = loadAlbumImage();
-            if (image == null) {
-                logger.log(Level.WARNING, "Failed to load album image.");
-                continue;
-            }
+        List<Image> images = loadAlbumImages(getCellCount());
+        for (Image image : images) {
             AlbumImageCell imageCell = new AlbumImageCell(image);
             albumImageCells.add(imageCell);
             albumGridPanel.add(imageCell.getPanel());
         }
     }
 
-    private Image loadAlbumImage() {
+    private List<Image> loadAlbumImages(int amount) {
+        IAlbumCoverArtService albumCoverArtService = usingLocalAlbums ? localAlbumCoverArtService : discogsAlbumCoverArtService;
+        return albumCoverArtService.getAlbumCoverArt(amount);
+    }
+
+    private Image loadSingleAlbumImage() {
         IAlbumCoverArtService albumCoverArtService = usingLocalAlbums ? localAlbumCoverArtService : discogsAlbumCoverArtService;
         return albumCoverArtService.getRandomAlbumCoverArt();
     }
