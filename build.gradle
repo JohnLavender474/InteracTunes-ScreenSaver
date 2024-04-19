@@ -16,6 +16,12 @@ dependencies {
     // https://mvnrepository.com/artifact/org.json/json
     implementation group: 'org.json', name: 'json', version: '20240303'
 
+    // https://mvnrepository.com/artifact/com.github.scribejava/scribejava-apis
+    runtimeOnly group: 'com.github.scribejava', name: 'scribejava-apis', version: '8.3.3'
+
+    // https://mvnrepository.com/artifact/com.github.scribejava/scribejava-core
+    implementation group: 'com.github.scribejava', name: 'scribejava-core', version: '8.3.3'
+
     // https://projectlombok.org/setup/gradle
     compileOnly 'org.projectlombok:lombok:1.18.32'
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
