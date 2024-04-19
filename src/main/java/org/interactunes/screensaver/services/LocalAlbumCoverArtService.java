@@ -17,7 +17,14 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
     private static final String ALBUMS_FOLDER_PATH = "images/albums";
     private static final int MAX_RESULTS_RANDOM = 10;
 
-    private final Logger logger = Logger.getLogger(LocalAlbumCoverArtService.class.getName());
+    private final Logger logger;
+
+    /**
+     * Creates a new local album cover art service.
+     */
+    public LocalAlbumCoverArtService() {
+        logger = Logger.getLogger(LocalAlbumCoverArtService.class.getName());
+    }
 
     /**
      * {@inheritDoc}

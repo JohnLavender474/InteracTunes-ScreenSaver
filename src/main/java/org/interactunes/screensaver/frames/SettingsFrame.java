@@ -15,7 +15,7 @@ public class SettingsFrame implements IShowable, IDisposable {
 
     private static final int SETTINGS_FONT_SIZE = 24;
     private static final Integer[] GRID_SIZES = {2, 3, 4, 5, 6};
-    private static final Integer[] IMAGE_UPDATE_DELAYS = {3, 4, 5};
+    private static final Integer[] IMAGE_UPDATE_DELAYS = {2, 3, 4, 5};
     private static final String LOCAL = "Local";
     private static final String DISCOGS = "Discogs";
 

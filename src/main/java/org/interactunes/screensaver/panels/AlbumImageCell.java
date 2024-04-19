@@ -5,6 +5,9 @@ import lombok.Getter;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * A cell for displaying album images.
+ */
 public class AlbumImageCell {
 
     public static final int DEFAULT_INIT_SIZE = 400;
@@ -16,10 +19,21 @@ public class AlbumImageCell {
     private Image image;
     private int imageSize;
 
+    /**
+     * Creates a new album image cell.
+     *
+     * @param image The image to display.
+     */
     public AlbumImageCell(Image image) {
         this(image, DEFAULT_INIT_SIZE);
     }
 
+    /**
+     * Creates a new album image cell.
+     *
+     * @param image     The image to display.
+     * @param imageSize The size of the image.
+     */
     public AlbumImageCell(Image image, int imageSize) {
         this.image = image;
         this.imageSize = imageSize;
@@ -38,6 +52,12 @@ public class AlbumImageCell {
         panel.add(albumImageLabel);
     }
 
+    /**
+     * Resizes the cell.
+     *
+     * @param cellWidth  The width of the cell.
+     * @param cellHeight The height of the cell.
+     */
     public void resize(int cellWidth, int cellHeight) {
         imageSize = Math.min(cellWidth, cellHeight);
         Image scaledImage = image.getScaledInstance(imageSize, imageSize, Image.SCALE_SMOOTH);
@@ -46,6 +66,11 @@ public class AlbumImageCell {
         panel.setBackground(Color.BLACK);
     }
 
+    /**
+     * Sets the image to display.
+     *
+     * @param image The image to display.
+     */
     public void setImage(Image image) {
         this.image = image;
         updateImage();

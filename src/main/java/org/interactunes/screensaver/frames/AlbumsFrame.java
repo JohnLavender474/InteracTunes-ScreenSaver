@@ -34,7 +34,8 @@ public class AlbumsFrame implements IShowable {
     private static final int MIN_WINDOW_WIDTH = 900;
     private static final int MIN_WINDOW_HEIGHT = 900;
     private static final int SETTINGS_FONT_SIZE = 20;
-    private static final int DEFAULT_IMAGE_CHANGE_INTERVAL_MS = 3000;
+    private static final int LOADING_FONT_SIZE = 56;
+    private static final int DEFAULT_IMAGE_CHANGE_INTERVAL_MS = 2000;
 
     private final Logger logger = Logger.getLogger(AlbumsFrame.class.getName());
 
@@ -42,6 +43,9 @@ public class AlbumsFrame implements IShowable {
     private final JPanel albumGridPanel;
     private final SettingsFrame settingsFrame;
     private final Timer imageChangeTimer;
+
+    private final JLabel loadingLabel;
+    private final JPanel loadingPanel;
 
     @Getter
     private final LocalAlbumCoverArtService localAlbumCoverArtService;
@@ -106,9 +110,34 @@ public class AlbumsFrame implements IShowable {
 
         settingsFrame = new SettingsFrame(this);
         JButton settingsButton = new JButton("Settings");
+        settingsButton.setPreferredSize(new Dimension(100, 100));
         settingsButton.setFont(new Font("Arial", Font.PLAIN, UtilMethods.pointToPixel(SETTINGS_FONT_SIZE)));
         settingsButton.addActionListener(e -> settingsFrame.show());
         frame.add(settingsButton, BorderLayout.SOUTH);
+
+        loadingLabel = new JLabel("Loading...");
+        loadingLabel.setFont(new Font("Arial", Font.PLAIN, UtilMethods.pointToPixel(LOADING_FONT_SIZE)));
+        loadingLabel.setBackground(Color.BLACK);
+        loadingLabel.setForeground(Color.WHITE);
+
+        loadingPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                loadingLabel.setBounds(
+                        (getWidth() - loadingLabel.getPreferredSize().width) / 2,
+                        (getHeight() - loadingLabel.getPreferredSize().height) / 2,
+                        loadingLabel.getPreferredSize().width,
+                        loadingLabel.getPreferredSize().height
+                );
+            }
+        };
+        loadingPanel.setOpaque(false);
+        loadingPanel.setLayout(null);
+        loadingPanel.add(loadingLabel);
+        loadingLabel.setVisible(false);
+
+        frame.setGlassPane(loadingPanel);
     }
 
     @Override
@@ -126,11 +155,17 @@ public class AlbumsFrame implements IShowable {
         updateGrid();
     }
 
+    private void setUpdating(boolean updating) {
+        this.updating = updating;
+        loadingPanel.setVisible(updating);
+        loadingLabel.setVisible(updating);
+    }
+
     /**
      * Update the album grid. Repopulates the album grid with new album images. Resizes the album images.
      */
     void updateGrid() {
-        updating = true;
+        setUpdating(true);
 
         SwingUtilities.invokeLater(() -> {
             albumGridPanel.removeAll();
@@ -139,8 +174,8 @@ public class AlbumsFrame implements IShowable {
             resizeAlbumImages();
 
             SwingUtilities.invokeLater(() -> {
+                setUpdating(false);
                 frame.repaint();
-                updating = false;
             });
         });
     }
@@ -205,8 +240,15 @@ public class AlbumsFrame implements IShowable {
     }
 
     private void resizeAlbumImages() {
+        boolean isUpdatingOnStart = updating;
+        if (!isUpdatingOnStart) {
+            setUpdating(true);
+        }
         int cellWidth = albumGridPanel.getWidth() / gridRowCount;
         int cellHeight = albumGridPanel.getHeight() / gridRowCount;
         albumImageCells.forEach(albumImageCell -> albumImageCell.resize(cellWidth, cellHeight));
+        if (!isUpdatingOnStart) {
+            setUpdating(false);
+        }
     }
 }
