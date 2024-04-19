@@ -20,9 +20,11 @@ You can run the app by running the main method in the `AppLauncher.java` file.
 # Features
 
 The app displays images in a grid
+
 <img src="./images/Grid.png" width="300">
 
 Settings are contained in a separate window that can be opened by clicking the settings button.
+
 <img src="./images/Settings.png" width="300">
 
 The "Service" option in the settings window allows you to choose between the "Local" and "Discog" services. The Discog service requires that the API key and secret env vars be set.
