@@ -1,7 +1,6 @@
 package org.interactunes.screensaver.panels;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +8,7 @@ import java.awt.image.BufferedImage;
 
 public class AlbumImageCell {
 
-    public static final int DEFAULT_INIT_SIZE = 300;
+    public static final int DEFAULT_INIT_SIZE = 400;
 
     private final JLabel albumImageLabel;
     @Getter

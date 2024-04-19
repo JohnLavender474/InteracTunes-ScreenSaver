@@ -8,14 +8,14 @@ import java.awt.*;
 
 public class SettingsFrame implements IShowable {
 
-    private static final int SETTINGS_FONT_SIZE = 12;
+    private static final int SETTINGS_FONT_SIZE = 24;
 
     private final JFrame settingsFrame;
 
     public SettingsFrame(AlbumsFrame albumsFrame) {
         settingsFrame = new JFrame("Settings");
         settingsFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        settingsFrame.setSize(200, 150);
+        settingsFrame.setSize(800, 600);
         settingsFrame.setLocationRelativeTo(this.settingsFrame);
         settingsFrame.setVisible(true);
 
@@ -43,5 +43,9 @@ public class SettingsFrame implements IShowable {
     @Override
     public void show() {
         settingsFrame.setVisible(true);
+    }
+
+    public void dispose() {
+        settingsFrame.dispose();
     }
 }

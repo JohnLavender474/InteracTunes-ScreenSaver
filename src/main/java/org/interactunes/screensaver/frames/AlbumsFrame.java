@@ -13,6 +13,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
@@ -21,8 +23,8 @@ public class AlbumsFrame implements IShowable {
     public static final int DEFAULT_BORDER_GAP = 10;
     public static final int DEFAULT_GRID_ROW_COUNT = 3;
     public static final int DEFAULT_CELL_GAP = 10;
-    public static final int DEFAULT_WINDOW_WIDTH = 900;
-    public static final int DEFAULT_WINDOW_HEIGHT = 900;
+    public static final int DEFAULT_WINDOW_WIDTH = 1200;
+    public static final int DEFAULT_WINDOW_HEIGHT = 1200;
     private static final int SETTINGS_FONT_SIZE = 20;
     private static final int IMAGE_CHANGE_INTERVAL_MS = 2000;
 
@@ -59,6 +61,13 @@ public class AlbumsFrame implements IShowable {
             public void componentResized(ComponentEvent e) {
                 super.componentResized(e);
                 resizeAlbumImages();
+            }
+        });
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                super.windowClosed(e);
+                settingsFrame.dispose();
             }
         });
 
