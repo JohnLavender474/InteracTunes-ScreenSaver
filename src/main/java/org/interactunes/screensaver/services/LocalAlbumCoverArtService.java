@@ -93,7 +93,7 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
             String path = queue.poll();
             if (path == null) {
                 logger.log(Level.WARNING, "No album cover art found for path: " + path);
-                continue;
+                break;
             }
             try {
                 Image image = ImageIO.read(new File(path));
