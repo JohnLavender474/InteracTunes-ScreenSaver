@@ -13,7 +13,7 @@ import java.util.logging.Logger;
  */
 public class SettingsFrame implements IShowable, IDisposable {
 
-    private static final int SETTINGS_FONT_SIZE = 24;
+    private static final int SETTINGS_FONT_SIZE = 16;
     private static final Integer[] GRID_SIZES = {2, 3, 4, 5, 6};
     private static final Integer[] IMAGE_UPDATE_DELAYS = {2, 3, 4, 5};
     private static final String LOCAL = "Local";
@@ -33,7 +33,7 @@ public class SettingsFrame implements IShowable, IDisposable {
     public SettingsFrame(AlbumsFrame albumsFrame) {
         settingsFrame = new JFrame("Settings");
         settingsFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        settingsFrame.setMinimumSize(new Dimension(800, 600));
+        settingsFrame.setMinimumSize(new Dimension(750, 600));
         settingsFrame.setLocationRelativeTo(settingsFrame);
         settingsFrame.setVisible(true);
 
