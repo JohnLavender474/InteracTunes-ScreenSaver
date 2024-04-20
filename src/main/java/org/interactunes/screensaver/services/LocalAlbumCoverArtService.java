@@ -92,7 +92,7 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
             }
             String path = queue.poll();
             if (path == null) {
-                logger.log(Level.WARNING, "No album cover art found for path: " + path);
+                logger.log(Level.WARNING, "No album cover art found for path.");
                 break;
             }
             try {
