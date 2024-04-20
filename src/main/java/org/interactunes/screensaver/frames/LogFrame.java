@@ -8,6 +8,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedList;
 
+/**
+ * A frame that displays the log.
+ */
 public class LogFrame implements IShowable, IDisposable {
 
     private final JFrame frame;
@@ -15,6 +18,11 @@ public class LogFrame implements IShowable, IDisposable {
     private final LinkedList<String> logQueue;
     private final int maxCapacity;
 
+    /**
+     * Creates a new log frame.
+     *
+     * @param maxCapacity The maximum amount of logs to display before removing the oldest log.
+     */
     public LogFrame(int maxCapacity) {
         this.maxCapacity = maxCapacity;
 
@@ -46,6 +54,11 @@ public class LogFrame implements IShowable, IDisposable {
         frame.dispose();
     }
 
+    /**
+     * Adds a log to the log frame.
+     *
+     * @param log The log to add.
+     */
     public void addLog(String log) {
         if (logQueue.size() >= maxCapacity) {
             String removedLog = logQueue.removeFirst();
