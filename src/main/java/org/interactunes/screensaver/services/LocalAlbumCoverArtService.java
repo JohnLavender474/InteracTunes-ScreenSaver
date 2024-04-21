@@ -1,5 +1,7 @@
 package org.interactunes.screensaver.services;
 
+import org.interactunes.screensaver.utils.UtilMethods;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.File;
@@ -34,7 +36,7 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
         getAlbumCoverArtPaths(queue);
     }
 
-    private void getAlbumCoverArtPaths(Collection<String> queue) {
+    private void getAlbumCoverArtPaths(Collection<String> collection) {
         try {
             URL albumsFolderUrl = getClass().getClassLoader().getResource(ALBUMS_FOLDER_PATH);
             if (albumsFolderUrl == null) {
@@ -43,15 +45,17 @@ public class LocalAlbumCoverArtService implements IAlbumCoverArtService {
             }
 
             File albumsFolder = new File(albumsFolderUrl.toURI());
-            List<File> albumFiles = new ArrayList<>(Arrays.stream(Objects.requireNonNull(albumsFolder.listFiles())).toList());
-            if (albumFiles.isEmpty()) {
+            File[] albumFiles = albumsFolder.listFiles();
+            if (albumFiles == null || albumFiles.length == 0) {
                 logger.log(Level.SEVERE, "No album images found in the folder.");
                 return;
             }
-            Collections.shuffle(albumFiles);
-            albumFiles.forEach(albumFile -> queue.add(albumFile.getAbsolutePath()));
+            UtilMethods.shuffleArray(albumFiles);
+            for (File albumFile : albumFiles) {
+                collection.add(albumFile.getAbsolutePath());
+            }
 
-            logger.log(Level.INFO, "Fetched " + queue.size() + " album images.");
+            logger.log(Level.INFO, "Fetched " + collection.size() + " album images.");
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error accessing albums folder: " + e.getMessage());
         }
